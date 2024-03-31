@@ -73,6 +73,7 @@ class CIFAR10DataModule(L.LightningDataModule):
 # update 2: transfer learning & fine tuning --> 78% acc on test
 # update 3: upsample to 224x224 before passing to resnet18 --> 86% acc on test
 # update 4: upgrade to resnet50 --> 94% acc on test
+# update 5: run up to 20 epochs --> 96.5% acc on test
 class TransferLearningModule(L.LightningModule):
     def __init__(
         self,
@@ -205,17 +206,25 @@ class TransferLearningModule(L.LightningModule):
             config_path=config_path,
             config_name="basic_lvl3")
 def main(cfg: DictConfig) -> None:
-    logging.info("loaded config")
-
+    logging.info("config loaded")
     model: TransferLearningModule = hydra.utils.instantiate(cfg.model)
+    logging.info("model initialized")
     data_module: CIFAR10DataModule = hydra.utils.instantiate(cfg.data_module)
+    logging.info("data module initialized")
     logger: Logger = hydra.utils.instantiate(cfg.logger)
+    logging.info("logger initialized")
     callbacks = [hydra.utils.instantiate(cb) for cb in cfg.callbacks]
+    logging.info("callbacks initialized")
     trainer: L.Trainer = hydra.utils.instantiate(
         cfg.trainer, logger=logger, callbacks=callbacks)
-
+    logging.info("trainer initialized, fitting model...")
     trainer.fit(model=model, datamodule=data_module)
-    trainer.test(model=model, datamodule=data_module)
+    logging.info("fitting done, testing model...")
+    ckpt_path = trainer.checkpoint_callback.best_model_path
+    if ckpt_path == "":
+        logging.info("no best model found, using current model")
+        ckpt_path = None
+    trainer.test(model=model, datamodule=data_module, ckpt_path=ckpt_path)
 
 
 if __name__ == "__main__":
