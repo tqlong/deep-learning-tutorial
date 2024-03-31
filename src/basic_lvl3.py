@@ -20,11 +20,15 @@ config_path = str(root_path / "config")
 class CIFAR10DataModule(L.LightningDataModule):
     def __init__(
         self,
+        train_transform: tf.Compose = None,
+        test_transform: tf.Compose = None,
         data_dir: str = "./data",
         batch_size: int = 32,
         num_workers: int = 8
     ):
         super().__init__()
+        self.train_transform = train_transform
+        self.test_transform = test_transform
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -35,40 +39,16 @@ class CIFAR10DataModule(L.LightningDataModule):
         CIFAR10(self.data_dir, train=False, download=True)
 
     def setup(self, stage=None):
-        # transforms for imagenet
-        transform = tf.Compose([
-            # some augmentations
-            tf.RandomHorizontalFlip(),
-            tf.RandomAffine(
-                degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-            tf.ColorJitter(
-                brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
-            tf.RandomResizedCrop(32, scale=(0.9, 1.1), ratio=(0.9, 1.1)),
-            # to tensor
-            tf.ToTensor(),
-            tf.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225]
-            )
-        ])
-
-        test_transform = tf.Compose([
-            tf.ToTensor(),
-            tf.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225]
-            )
-        ])
-
         # dataset
         dataset = CIFAR10(
-            self.data_dir, train=True, download=True, transform=transform)
+            self.data_dir, train=True, download=True,
+            transform=self.train_transform)
         logging.info(f"dataset: {len(dataset)}")
         self.train_ds, self.val_ds = random_split(
             dataset, [45000, 5000])
         self.test_ds = CIFAR10(
             self.data_dir, train=False,
-            download=True, transform=test_transform)
+            download=True, transform=self.test_transform)
 
     def train_dataloader(self):
         return DataLoader(
@@ -227,14 +207,9 @@ def main(cfg: DictConfig) -> None:
 
     model: TransferLearningModule = hydra.utils.instantiate(cfg.model)
     data_module: CIFAR10DataModule = hydra.utils.instantiate(cfg.data_module)
-
     trainer: L.Trainer = hydra.utils.instantiate(cfg.trainer)
 
-    trainer.fit(
-        model=model,
-        datamodule=data_module
-    )
-
+    trainer.fit(model=model, datamodule=data_module)
     trainer.test(model=model, datamodule=data_module)
 
 
