@@ -1,0 +1,47 @@
+model:
+  _target_: src.basic_lvl3.TransferLearningModule
+  backbone:
+    _target_: torchvision.models.resnet50
+    weights: DEFAULT
+  classification_head:
+    _target_: torch.nn.Sequential
+    _args_:
+      - _target_: torch.nn.BatchNorm1d
+        num_features: 2048
+      - _target_: torch.nn.Linear
+        in_features: 2048
+        out_features: 512
+      - _target_: torch.nn.ReLU
+      - _target_: torch.nn.BatchNorm1d
+        num_features: 512
+      - _target_: torch.nn.Linear
+        in_features: 512
+        out_features: 256
+      - _target_: torch.nn.ReLU
+      - _target_: torch.nn.Linear
+        in_features: 256
+        out_features: 10
+  optimizer:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: 0.001
+  scheduler:
+    _target_: torch.optim.lr_scheduler.StepLR
+    _partial_: true
+    step_size: 5
+    gamma: 0.1
+  num_classes: 10
+  n_transfer_epochs: 2
+
+data_module:
+  _target_: src.basic_lvl3.CIFAR10DataModule
+  data_dir: data/
+  batch_size: 64
+  num_workers: 8
+
+trainer:
+  _target_: lightning.Trainer
+  # limit_train_batches: 100
+  # limit_val_batches: 100
+  # limit_test_batches: 100
+  max_epochs: 10
