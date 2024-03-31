@@ -71,7 +71,8 @@ data_module:
 
 trainer:
   _target_: lightning.Trainer
+  max_epochs: 10
+  # fast_dev_run: true
   # limit_train_batches: 100
   # limit_val_batches: 100
   # limit_test_batches: 100
-  max_epochs: 10

@@ -39,16 +39,17 @@ class CIFAR10DataModule(L.LightningDataModule):
         CIFAR10(self.data_dir, train=False, download=True)
 
     def setup(self, stage=None):
-        # dataset
-        dataset = CIFAR10(
-            self.data_dir, train=True, download=True,
-            transform=self.train_transform)
-        logging.info(f"dataset: {len(dataset)}")
-        self.train_ds, self.val_ds = random_split(
-            dataset, [45000, 5000])
-        self.test_ds = CIFAR10(
-            self.data_dir, train=False,
-            download=True, transform=self.test_transform)
+        if stage == "fit" or stage is None:
+            dataset = CIFAR10(
+                self.data_dir, train=True, download=True,
+                transform=self.train_transform)
+            logging.info(f"dataset: {len(dataset)}")
+            self.train_ds, self.val_ds = random_split(
+                dataset, [45000, 5000])
+        if stage == "test" or stage is None:
+            self.test_ds = CIFAR10(
+                self.data_dir, train=False,
+                download=True, transform=self.test_transform)
 
     def train_dataloader(self):
         return DataLoader(
