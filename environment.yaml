@@ -24,3 +24,4 @@ dependencies:
     - rootutils==1.0.7
     - torchmetrics
     - wandb>=0.12.10
+    - rich>=10.2.2

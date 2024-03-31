@@ -210,7 +210,9 @@ def main(cfg: DictConfig) -> None:
     model: TransferLearningModule = hydra.utils.instantiate(cfg.model)
     data_module: CIFAR10DataModule = hydra.utils.instantiate(cfg.data_module)
     logger: Logger = hydra.utils.instantiate(cfg.logger)
-    trainer: L.Trainer = hydra.utils.instantiate(cfg.trainer, logger=logger)
+    callbacks = [hydra.utils.instantiate(cb) for cb in cfg.callbacks]
+    trainer: L.Trainer = hydra.utils.instantiate(
+        cfg.trainer, logger=logger, callbacks=callbacks)
 
     trainer.fit(model=model, datamodule=data_module)
     trainer.test(model=model, datamodule=data_module)
