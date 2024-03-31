@@ -119,6 +119,9 @@ callbacks:
 trainer:
   _target_: lightning.Trainer
   max_epochs: 20
+  accelerator: gpu
+  devices: [3]
+
   # fast_dev_run: true
   # limit_train_batches: 100
   # limit_val_batches: 100

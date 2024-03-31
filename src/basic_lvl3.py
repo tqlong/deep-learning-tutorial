@@ -175,8 +175,8 @@ class TransferLearningModule(L.LightningModule):
     def on_validation_epoch_end(self):
         acc = self.val_acc.compute()
         self.val_acc_best(acc)
-        self.log("val/acc_best", self.val_acc_best, on_step=False,
-                 on_epoch=True, prog_bar=True)
+        self.log("val/acc_best", self.val_acc_best.compute(),
+                 sync_dist=True, prog_bar=True)
 
     def test_step(self, batch):
         self.step(batch, self.test_loss, self.test_acc)
