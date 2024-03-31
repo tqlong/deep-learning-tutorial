@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, random_split
 import lightning as L
+from lightning.pytorch.loggers import Logger
 import hydra
 from omegaconf import DictConfig
 import rootutils
@@ -208,7 +209,8 @@ def main(cfg: DictConfig) -> None:
 
     model: TransferLearningModule = hydra.utils.instantiate(cfg.model)
     data_module: CIFAR10DataModule = hydra.utils.instantiate(cfg.data_module)
-    trainer: L.Trainer = hydra.utils.instantiate(cfg.trainer)
+    logger: Logger = hydra.utils.instantiate(cfg.logger)
+    trainer: L.Trainer = hydra.utils.instantiate(cfg.trainer, logger=logger)
 
     trainer.fit(model=model, datamodule=data_module)
     trainer.test(model=model, datamodule=data_module)
