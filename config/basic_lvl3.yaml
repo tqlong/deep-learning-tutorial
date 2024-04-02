@@ -120,7 +120,8 @@ trainer:
   _target_: lightning.Trainer
   max_epochs: 20
   accelerator: gpu
-  devices: [3]
+  devices: [2]
+  precision: 16-mixed
 
   # fast_dev_run: true
   # limit_train_batches: 100

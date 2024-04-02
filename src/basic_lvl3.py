@@ -169,9 +169,9 @@ class TransferLearningModule(L.LightningModule):
     def validation_step(self, batch):
         self.step(batch, self.val_loss, self.val_acc)
         self.log("val/loss", self.val_loss, on_step=False,
-                 on_epoch=True, prog_bar=True)
+                 on_epoch=True, prog_bar=True, sync_dist=True)
         self.log("val/acc", self.val_acc, on_step=False,
-                 on_epoch=True, prog_bar=True)
+                 on_epoch=True, prog_bar=True, sync_dist=True)
 
     def on_validation_epoch_end(self):
         acc = self.val_acc.compute()
@@ -182,9 +182,9 @@ class TransferLearningModule(L.LightningModule):
     def test_step(self, batch):
         self.step(batch, self.test_loss, self.test_acc)
         self.log("test/loss", self.test_loss, on_step=False,
-                 on_epoch=True, prog_bar=True)
+                 on_epoch=True, prog_bar=True, sync_dist=True)
         self.log("test/acc", self.test_acc, on_step=False,
-                 on_epoch=True, prog_bar=True)
+                 on_epoch=True, prog_bar=True, sync_dist=True)
 
     def configure_optimizers(self):
         optimizer = self.hparams.optimizer(self.parameters())
