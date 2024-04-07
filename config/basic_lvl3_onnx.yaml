@@ -1,0 +1,10 @@
+defaults:
+  - _self_
+  - model: resnet50
+  - trainer: default
+paths:
+  output_dir: ${hydra:runtime.output_dir}
+
+ckpt_path: outputs/2024-04-02/13-52-23/checkpoints/best_epoch_010.ckpt
+model_onnx_name: model.onnx
+model_torchscript_name: model.pt

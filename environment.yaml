@@ -25,3 +25,5 @@ dependencies:
     - torchmetrics
     - wandb>=0.12.10
     - rich>=10.2.2
+    - onnx==1.16.0
+    - onnxruntime==1.17.1

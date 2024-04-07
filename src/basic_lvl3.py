@@ -119,7 +119,8 @@ class TransferLearningModule(L.LightningModule):
 
     def forward(self, x):
         # upsample from 32x32 to 224x224
-        x = nn.Upsample(size=(224, 224), mode="bilinear")(x)
+        x = nn.functional.interpolate(x, size=(224, 224), mode="bilinear")
+        # nn.Upsample(size=(224, 224), mode="bilinear")(x)
         if self.is_finetuning:
             z = self.feature_extractor(x)
         else:
