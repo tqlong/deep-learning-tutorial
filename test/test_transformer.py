@@ -10,7 +10,9 @@ config_path = str(root_path / "config")
 
 from src.transformer import (
     scale_dot_product_attention,
-    MultiHeadAttention
+    MultiHeadAttention,
+    EncoderBlock,
+    TransformerEncoder
 )
 
 
@@ -37,6 +39,24 @@ class TestTransformer(unittest.TestCase):
         input_dim, embed_dim, num_heads = 3, 10, 3
         with self.assertRaises(AssertionError):
             MultiHeadAttention(input_dim, embed_dim, num_heads)
+
+    def test_encoder_block(self):
+        input_dim, num_heads, dim_ff = 15, 5, 6
+        batch_size = 10
+        seq_len = 4
+        encoder = EncoderBlock(input_dim, num_heads, dim_ff)
+        x = torch.randn((batch_size, seq_len, input_dim))
+        values = encoder(x)
+        self.assertEqual(values.size(), (batch_size, seq_len, input_dim))
+
+    def test_transformer_encoder(self):
+        input_dim, num_heads, dim_ff, num_layers = 15, 5, 6, 4
+        batch_size = 10
+        seq_len = 4
+        encoder = TransformerEncoder(num_layers, input_dim=input_dim, num_heads=num_heads, dim_feedforward=dim_ff)
+        x = torch.randn((batch_size, seq_len, input_dim))
+        values = encoder(x)
+        self.assertEqual(values.size(), (batch_size, seq_len, input_dim))
 
 
 if __name__ == '__main__':
