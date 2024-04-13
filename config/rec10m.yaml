@@ -11,14 +11,14 @@ seed: 42
 data_module:
   _target_: src.rec_matrix_factorization.MovieLensDataModule
   root_path: ${paths.data_dir}
-  data_relative_path: ml-100k/u.data
-  data_url: https://files.grouplens.org/datasets/movielens/ml-100k.zip
+  data_relative_path: ml-10M100K/ratings.dat  # run sed 's/::/\t/g' ratings.dat > ratings.dat
+  data_url: https://files.grouplens.org/datasets/movielens/ml-10m.zip
   batch_size: 256
   num_workers: 8
 
 model:
-  num_users: 943
-  num_items: 1682
+  num_users: 71567
+  num_items: 65133
   embedding_dim: 128
 
 trainer:

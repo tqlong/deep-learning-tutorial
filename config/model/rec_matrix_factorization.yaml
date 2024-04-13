@@ -1,0 +1,28 @@
+_target_: src.rec_matrix_factorization.MatrixFactorization
+num_users: 71567
+num_items: 65133
+embedding_dim: 128
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 0.001
+score_net:
+  _target_: torch.nn.Sequential
+  _args_:
+    - _target_: torch.nn.BatchNorm1d
+      num_features: 256
+    - _target_: torch.nn.Linear
+      in_features: 256
+      out_features: 100
+    - _target_: torch.nn.ReLU
+    - _target_: torch.nn.BatchNorm1d
+      num_features: 100
+    - _target_: torch.nn.Linear
+      in_features: 100
+      out_features: 100
+    - _target_: torch.nn.ReLU
+    - _target_: torch.nn.Dropout
+      p: 0.5
+    - _target_: torch.nn.Linear
+      in_features: 100
+      out_features: 1

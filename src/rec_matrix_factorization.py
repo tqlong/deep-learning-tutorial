@@ -44,10 +44,11 @@ class MovieLensDataModule(L.LightningDataModule):
         data_url="https://files.grouplens.org/datasets/movielens/ml-100k.zip",
         batch_size=64,
         num_workers=4,
-        random_state=42
     ):
         super().__init__()
         self.save_hyperparameters()
+        self.train_df, self.val_df, self.test_df = None, None, None
+        self.train_dataset, self.val_dataset, self.test_dataset = None, None, None
 
     def prepare_data(self):
         # download zip data from data_url to root_path
@@ -62,7 +63,8 @@ class MovieLensDataModule(L.LightningDataModule):
             logging.info("Data downloaded")
 
         # unzip the file
-        if Path.exists(zip_file_path) and not Path.exists(root_path / "ml-100k"):
+        data_root = root_path / self.hparams.data_relative_path.split("/")[0]
+        if Path.exists(zip_file_path) and not Path.exists(data_root):
             with ZipFile(zip_file_path, 'r') as zip_ref:
                 zip_ref.extractall(root_path)
             logging.info("Data unzipped")
@@ -77,17 +79,19 @@ class MovieLensDataModule(L.LightningDataModule):
         root_path = Path(self.hparams.root_path)
         data_path = root_path / self.hparams.data_relative_path
         df = pd.read_csv(data_path, sep="\t", header=None)
+        print(df.max(axis=0), df.shape)
 
         # split into train, val, test
-        train_df, test_df = train_test_split(df, test_size=0.1, random_state=self.hparams.random_state)
-        train_df, val_df = train_test_split(train_df, test_size=1 / 9, random_state=self.hparams.random_state)
+        if self.train_df is None or self.val_df is None or self.test_df is None:
+            train_df, self.test_df = train_test_split(df, test_size=0.1)
+            self.train_df, self.val_df = train_test_split(train_df, test_size=1 / 9)
 
         # create datasets
         if stage == "fit" or stage is None:
-            self.train_dataset = MovieLensDataset(train_df)
-            self.val_dataset = MovieLensDataset(val_df)
+            self.train_dataset = MovieLensDataset(self.train_df)
+            self.val_dataset = MovieLensDataset(self.val_df)
         if stage == "test" or stage is None:
-            self.test_dataset = MovieLensDataset(test_df)
+            self.test_dataset = MovieLensDataset(self.test_df)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.hparams.batch_size,
@@ -103,21 +107,12 @@ class MovieLensDataModule(L.LightningDataModule):
 
 
 class MatrixFactorization(L.LightningModule):
-    def __init__(self, num_users, num_items, optimizer, n_hidden=100, dropout=0.5, embedding_dim=32):
+    def __init__(self, num_users, num_items, score_net, optimizer, n_hidden=100, embedding_dim=32):
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["score_net"])
         self.user_embeddings = torch.nn.Embedding(num_users, embedding_dim)
         self.item_embeddings = torch.nn.Embedding(num_items, embedding_dim)
-        self.score_net = torch.nn.Sequential(
-            # torch.nn.BatchNorm1d(2 * embedding_dim),
-            torch.nn.Linear(2 * embedding_dim, n_hidden),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(dropout),
-            # torch.nn.Linear(n_hidden, n_hidden),
-            # torch.nn.ReLU(),
-            # torch.nn.Dropout(dropout),
-            torch.nn.Linear(n_hidden, 1)
-        )
+        self.score_net = score_net
         self.initialize_parameters()
 
         self.train_loss = tm.MeanMetric()
@@ -188,6 +183,8 @@ class MatrixFactorization(L.LightningModule):
 @hydra.main(version_base=None, config_path=config_path, config_name="rec")
 def main(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
+    L.seed_everything(cfg.seed)
+
     data_module: L.LightningDataModule = hydra.utils.instantiate(cfg.data_module)
     model: L.LightningModule = hydra.utils.instantiate(cfg.model)
     callbacks = [hydra.utils.instantiate(cb) for cb in cfg.callbacks]
